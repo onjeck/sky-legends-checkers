@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "server": "node server/index.js"
+    "server": "node server/index.js",
+    "dev:all": "start cmd /c npm run server && npm run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
