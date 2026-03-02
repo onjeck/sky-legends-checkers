@@ -67,11 +67,13 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
         }
     };
 
-    const handleJoinRoom = async () => {
-        if (!roomIdInput.trim()) return;
+    const handleJoinRoom = async (forcedRoomId?: string) => {
+        const targetRoomId = forcedRoomId || roomIdInput;
+        if (!targetRoomId.trim()) return;
+
         setIsConnecting(true);
         try {
-            const { playerColor, opponentName, theme } = await socketClient.joinRoom(roomIdInput.toUpperCase(), username);
+            const { playerColor, opponentName, theme } = await socketClient.joinRoom(targetRoomId.toUpperCase().trim(), username);
             setOpponentFound(true);
             toast.success(`Conectado ao reino de ${opponentName}!`);
             setTimeout(() => {
@@ -269,7 +271,7 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
                             />
 
                             <button
-                                onClick={handleJoinRoom}
+                                onClick={() => handleJoinRoom()}
                                 disabled={isConnecting || roomIdInput.length < 6}
                                 className="w-full relative px-8 py-5 rounded-xl gradient-gold text-primary-foreground font-display text-lg tracking-wide box-glow-gold hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
                             >
@@ -318,7 +320,7 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
                                             <p className="text-xs text-muted-foreground font-body">Soberano: {room.username} • {room.theme}</p>
                                         </div>
                                         <button
-                                            onClick={() => { setRoomIdInput(room.id); handleJoinRoom(); }}
+                                            onClick={() => handleJoinRoom(room.id)}
                                             className="px-4 py-2 rounded-lg bg-gold/10 hover:bg-gold text-gold hover:text-primary-foreground text-xs font-display border border-gold/20 transition-all uppercase tracking-wider"
                                         >
                                             Entrar

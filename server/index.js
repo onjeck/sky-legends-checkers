@@ -20,6 +20,7 @@ io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
     socket.on('create-room', ({ username, kingdomName, theme }) => {
+        console.log(`[SERVER] Create room requested by ${username} (${socket.id})`);
         const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
         rooms.set(roomId, {
             id: roomId,
@@ -31,17 +32,20 @@ io.on('connection', (socket) => {
         });
         socket.join(roomId);
         socket.emit('room-created', { roomId, playerColor: 'gold' });
-        console.log(`Kingdom ${kingdomName} (${roomId}) created by ${username}`);
+        console.log(`[SERVER] Kingdom ${kingdomName} (${roomId}) created. Creator: ${username}`);
     });
 
     socket.on('join-room', ({ roomId, username }) => {
+        console.log(`[SERVER] Join room ${roomId} requested by ${username} (${socket.id})`);
         const room = rooms.get(roomId);
         if (!room) {
+            console.warn(`[SERVER] Join failed: Room ${roomId} not found`);
             socket.emit('error', 'Reino não encontrado!');
             return;
         }
 
         if (room.players.length >= 2) {
+            console.warn(`[SERVER] Join failed: Room ${roomId} is full`);
             socket.emit('error', 'Reino já está cheio!');
             return;
         }
@@ -63,7 +67,7 @@ io.on('connection', (socket) => {
             opponentName: username
         });
 
-        console.log(`${username} joined kingdom ${room.kingdomName} (${roomId})`);
+        console.log(`[SERVER] ${username} joined kingdom ${room.kingdomName} (${roomId}). Opponent: ${opponent.username}`);
     });
 
     socket.on('list-rooms', () => {

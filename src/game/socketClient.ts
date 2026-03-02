@@ -29,7 +29,6 @@ class SocketClient {
     createRoom(username: string, kingdomName: string, theme: string): Promise<string> {
         return new Promise((resolve) => {
             const socket = this.connect();
-            socket.emit('create-room', { username, kingdomName, theme });
 
             socket.once('room-created', ({ roomId, playerColor }) => {
                 this.roomId = roomId;
@@ -38,13 +37,14 @@ class SocketClient {
                 this.boardTheme = theme;
                 resolve(roomId);
             });
+
+            socket.emit('create-room', { username, kingdomName, theme });
         });
     }
 
     joinRoom(roomId: string, username: string): Promise<{ playerColor: 'gold' | 'crimson', opponentName: string, kingdomName: string, theme: string }> {
         return new Promise((resolve, reject) => {
             const socket = this.connect();
-            socket.emit('join-room', { roomId, username });
 
             socket.once('room-joined', ({ playerColor, opponentName, kingdomName, theme }) => {
                 this.roomId = roomId;
@@ -58,16 +58,20 @@ class SocketClient {
             socket.once('error', (msg) => {
                 reject(msg);
             });
+
+            socket.emit('join-room', { roomId, username });
         });
     }
 
     listRooms(): Promise<any[]> {
         return new Promise((resolve) => {
             const socket = this.connect();
-            socket.emit('list-rooms');
+
             socket.once('rooms-list', (rooms) => {
                 resolve(rooms);
             });
+
+            socket.emit('list-rooms');
         });
     }
 
