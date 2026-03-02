@@ -115,10 +115,12 @@ const GameBoard: React.FC<GameBoardProps> = ({ difficulty, boardTheme, pieceSet:
   // Handle Online Disconnect
   useEffect(() => {
     if (gameMode === 'online') {
-      socketClient.onPlayerDisconnected(() => {
+      const handleDisconnect = () => {
         toast.error('Oponente se desconectou do reino!');
         setWinner(socketClient.playerColor === 'gold' ? 'gold' : 'crimson');
-      });
+      };
+      socketClient.onPlayerDisconnected(handleDisconnect);
+      return () => socketClient.offPlayerDisconnected(handleDisconnect);
     }
   }, [gameMode]);
 
@@ -126,7 +128,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ difficulty, boardTheme, pieceSet:
   useEffect(() => {
     if (gameMode !== 'online') return;
 
-    socketClient.onOpponentMove((move) => {
+    const handleOpponentMove = (move: Move) => {
       if (move.captures.length > 0) {
         playCapture();
         triggerCaptureEffects(move.captures);
@@ -134,8 +136,16 @@ const GameBoard: React.FC<GameBoardProps> = ({ difficulty, boardTheme, pieceSet:
 
       if (move.isPromotion) setTimeout(() => playKing(), 200);
 
-      const newBoard = applyMove(board, move);
-      setBoard(newBoard);
+      setBoard(prevBoard => {
+        const newBoard = applyMove(prevBoard, move);
+
+        // Check winner on the new board
+        const w = getWinner(newBoard, ruleSet);
+        if (w) setWinner(w);
+
+        return newBoard;
+      });
+
       setLastMove(move);
 
       if (move.hasNextCapture) {
@@ -145,11 +155,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ difficulty, boardTheme, pieceSet:
         setCaptureSequencePos(null);
         setCurrentPlayer(socketClient.playerColor || 'gold'); // It's our turn now
       }
+    };
 
-      const w = getWinner(newBoard, ruleSet);
-      if (w) setWinner(w);
-    });
-  }, [board, ruleSet, gameMode, triggerCaptureEffects]);
+    socketClient.onOpponentMove(handleOpponentMove);
+    return () => socketClient.offOpponentMove(handleOpponentMove);
+  }, [ruleSet, gameMode, triggerCaptureEffects]);
 
   // AI move
   useEffect(() => {

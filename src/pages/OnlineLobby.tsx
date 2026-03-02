@@ -37,13 +37,19 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
             setCurrentRoomId(id);
             setView('create');
 
-            socketClient.onPlayerJoined(({ opponentName }) => {
+            const handleJoined = ({ opponentName }: { opponentName: string }) => {
                 setOpponentFound(true);
                 toast.success(`${opponentName} entrou no seu reino!`);
                 setTimeout(() => {
                     onGameStart('gold', opponentName, selectedTheme);
                 }, 1500);
-            });
+            };
+
+            socketClient.onPlayerJoined(handleJoined);
+            // The lobby will unmount when onGameStart is called, but we don't have a 
+            // standard useEffect for this specific transient listener. 
+            // However, socketClient.disconnect() is called in the return of the 
+            // main useEffect which should handle it if the lobby unmounts without starting.
         } catch (err) {
             toast.error('Erro ao criar reino celestial');
         } finally {

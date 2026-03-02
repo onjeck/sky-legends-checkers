@@ -81,6 +81,10 @@ class SocketClient {
         this.socket?.on('opponent-move', callback);
     }
 
+    offOpponentMove(callback: (move: Move) => void) {
+        this.socket?.off('opponent-move', callback);
+    }
+
     onPlayerJoined(callback: (data: { opponentName: string }) => void) {
         this.socket?.on('player-joined', (data) => {
             this.opponentName = data.opponentName;
@@ -88,8 +92,16 @@ class SocketClient {
         });
     }
 
+    offPlayerJoined(callback: (data: { opponentName: string }) => void) {
+        this.socket?.off('player-joined', callback);
+    }
+
     onPlayerDisconnected(callback: () => void) {
         this.socket?.on('player-disconnected', callback);
+    }
+
+    offPlayerDisconnected(callback: () => void) {
+        this.socket?.off('player-disconnected', callback);
     }
 
     disconnect() {
