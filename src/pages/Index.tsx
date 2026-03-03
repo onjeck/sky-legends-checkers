@@ -126,6 +126,7 @@ const Index = () => {
       username={username}
       onBack={() => setScreen('menu')}
       onGameStart={(color, opponent, theme) => {
+        console.log('[INDEX] onGameStart - Color:', color, 'Opponent:', opponent, 'Theme:', theme);
         setGameMode('online');
         setOnlinePlayerColor(color as Player);
         setOnlineOpponent(opponent);

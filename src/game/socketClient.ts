@@ -98,14 +98,18 @@ class SocketClient {
     }
 
     onPlayerJoined(callback: (data: { opponentName: string }) => void) {
-        this.socket?.on('player-joined', (data) => {
+        const wrapper = (data: { opponentName: string }) => {
             this.opponentName = data.opponentName;
             callback(data);
-        });
+        };
+        // Store wrapper to allow removal
+        (callback as any)._wrapper = wrapper;
+        this.socket?.on('player-joined', wrapper);
     }
 
     offPlayerJoined(callback: (data: { opponentName: string }) => void) {
-        this.socket?.off('player-joined', callback);
+        const wrapper = (callback as any)._wrapper;
+        this.socket?.off('player-joined', wrapper || callback);
     }
 
     onPlayerDisconnected(callback: () => void) {

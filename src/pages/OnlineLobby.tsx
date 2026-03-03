@@ -22,13 +22,22 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
     const [isConnecting, setIsConnecting] = useState(false);
     const [opponentFound, setOpponentFound] = useState(false);
 
+    // Monitor for room abandonment before game starts
+    const opponentFoundRef = React.useRef(opponentFound);
+    opponentFoundRef.current = opponentFound;
+    const viewRef = React.useRef(view);
+    viewRef.current = view;
+
     useEffect(() => {
         return () => {
-            if (!opponentFound) {
+            // ONLY disconnect if we are leaving the lobby without finding an opponent
+            // or if we are the host and haven't started the game yet.
+            if (!opponentFoundRef.current && (viewRef.current === 'create' || viewRef.current === 'setup' || viewRef.current === 'join')) {
+                console.log('[LOBBY] Sair do lobby sem oponente, desconectando...');
                 socketClient.disconnect();
             }
         };
-    }, [opponentFound]);
+    }, []);
 
     const handleCreateRoom = async () => {
         setIsConnecting(true);

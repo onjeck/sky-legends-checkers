@@ -60,6 +60,16 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const captureIdRef = useRef(0);
   const aiTimeoutRef = useRef<number>();
 
+  useEffect(() => {
+    console.log('[GAME] Mount - Mode:', gameMode, 'Prop Color:', onlinePlayerColor, 'Socket Color:', socketClient.playerColor);
+    console.log('[GAME] Opponent Prop:', onlineOpponentName, 'Socket Opponent:', socketClient.opponentName);
+
+    // Safety check: if props are missing but socket has them, use socket
+    if (gameMode === 'online' && !onlinePlayerColor && socketClient.playerColor) {
+      console.warn('[GAME] Prop color missing, falling back to socket state');
+    }
+  }, []);
+
   const recordGameResult = useCallback(async (winnerColor: Player | 'draw') => {
     if (winnerColor === 'draw') return;
 
