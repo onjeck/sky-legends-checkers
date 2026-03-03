@@ -141,7 +141,12 @@ const Index = () => {
       pieceSet={pieceSet}
       ruleSet={ruleSet}
       gameMode={gameMode}
-      onBack={() => setScreen('menu')}
+      onBack={() => {
+        setScreen('menu');
+        setOnlinePlayerColor(null);
+        setOnlineOpponent(null);
+        if (gameMode === 'online') socketClient.disconnect();
+      }}
       onlinePlayerColor={onlinePlayerColor}
       onlineOpponentName={onlineOpponent}
       colorOverrides={{
