@@ -12,6 +12,7 @@ import { Difficulty } from '@/game/aiPlayer';
 import { setSoundEnabled, isSoundEnabled } from '@/game/soundEngine';
 import { supabase } from '@/integrations/supabase/client';
 import { Swords, Brain, Zap, Star, Crown, Settings, Palette, User, Globe } from 'lucide-react';
+import { Player } from '@/game/checkersEngine';
 
 type Screen = 'menu' | 'customize' | 'difficulty' | 'settings' | 'game' | 'profile' | 'lobby';
 type GameMode = 'ai' | 'local' | 'online';
@@ -37,7 +38,7 @@ const Index = () => {
   const [ruleSet, setRuleSet] = useState<RuleSet>(() => (localStorage.getItem('ruleSet') as RuleSet) || 'brazilian');
   const [gameMode, setGameMode] = useState<GameMode>(() => (localStorage.getItem('gameMode') as GameMode) || 'ai');
   const [onlineOpponent, setOnlineOpponent] = useState<string | null>(null);
-  const [onlinePlayerColor, setOnlinePlayerColor] = useState<'gold' | 'crimson' | null>(null);
+  const [onlinePlayerColor, setOnlinePlayerColor] = useState<Player | null>(null);
 
   // Piece Color Overrides
   const [p1ColorOverride, setP1ColorOverride] = useState<string | null>(null);

@@ -70,7 +70,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     // Determine if the logged-in user won
     let userWon = false;
     if (gameMode === 'online') {
-      userWon = winnerColor === socketClient.playerColor;
+      userWon = winnerColor === (onlinePlayerColor || socketClient.playerColor);
     } else if (gameMode === 'ai') {
       userWon = winnerColor === 'gold';
     } else {
@@ -129,7 +129,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
     if (gameMode === 'online') {
       const handleDisconnect = () => {
         toast.error('Oponente se desconectou do reino!');
-        setWinner(socketClient.playerColor === 'gold' ? 'gold' : 'crimson');
+        const myColor = onlinePlayerColor || socketClient.playerColor || 'gold';
+        setWinner(myColor === 'gold' ? 'gold' : 'crimson');
       };
       socketClient.onPlayerDisconnected(handleDisconnect);
       return () => socketClient.offPlayerDisconnected(handleDisconnect);
@@ -350,7 +351,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
             {gameMode === 'online' && <Globe className="w-4 h-4 text-gold animate-pulse" />}
             Sky Legends Checkers
           </h2>
-          <p className="text-xs text-muted-foreground">{gameMode === 'local' ? 'Local 1v1' : gameMode === 'online' ? `Online vs ${socketClient.opponentName}` : difficultyLabels[difficulty]}</p>
+          <p className="text-xs text-muted-foreground">{gameMode === 'local' ? 'Local 1v1' : gameMode === 'online' ? `Online vs ${onlineOpponentName || socketClient.opponentName || 'Oponente'}` : difficultyLabels[difficulty]}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
