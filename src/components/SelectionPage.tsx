@@ -286,15 +286,14 @@ const SelectionPage: React.FC<SelectionPageProps> = ({ boardTheme, pieceSet, onC
   };
 
   const getCustomizedSet = (baseSet: typeof pieceSets[0]) => {
-    if (!p1Color && !p2Color) return baseSet;
     const p1 = celestialColors.find(c => c.hex === p1Color);
     const p2 = celestialColors.find(c => c.hex === p2Color);
 
     return {
       ...baseSet,
-      p1Color: p1Color || baseSet.p1Color,
+      p1Color: p1?.hex || baseSet.p1Color,
       p1Glow: p1?.glow || baseSet.p1Glow,
-      p2Color: p2Color || baseSet.p2Color,
+      p2Color: p2?.hex || baseSet.p2Color,
       p2Glow: p2?.glow || baseSet.p2Glow,
     };
   };
@@ -420,7 +419,10 @@ const SelectionPage: React.FC<SelectionPageProps> = ({ boardTheme, pieceSet, onC
                   </div>
 
                   <div className="relative group">
-                    <PiecePreview set={selectedPieces === s.key ? getCustomizedSet(s) : s} selected={selectedPieces === s.key} />
+                    <PiecePreview
+                      set={ownedSkins.includes(s.key) ? getCustomizedSet(s) : s}
+                      selected={selectedPieces === s.key}
+                    />
                     {innerTab === 'shop' && (
                       <div className="absolute inset-0 bg-background/20 rounded-lg flex items-center justify-center backdrop-blur-[1px]">
                         <Lock className="w-6 h-6 text-muted-foreground opacity-30" />

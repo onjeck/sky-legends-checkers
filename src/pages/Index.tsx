@@ -40,6 +40,8 @@ const Index = () => {
   const [gameMode, setGameMode] = useState<GameMode>(() => (localStorage.getItem('gameMode') as GameMode) || 'ai');
   const [onlineOpponent, setOnlineOpponent] = useState<string | null>(null);
   const [onlinePlayerColor, setOnlinePlayerColor] = useState<Player | null>(null);
+  const [p1OnlineStyle, setP1OnlineStyle] = useState<{ set: any, overrides: any } | null>(null);
+  const [p2OnlineStyle, setP2OnlineStyle] = useState<{ set: any, overrides: any } | null>(null);
 
   // Piece Color Overrides
   const [p1ColorOverride, setP1ColorOverride] = useState<string | null>(null);
@@ -128,12 +130,14 @@ const Index = () => {
         socketClient.disconnect('Abbandono Lobby');
         setScreen('menu');
       }}
-      onGameStart={(color, opponent, theme) => {
-        console.log('[INDEX] onGameStart - Color:', color, 'Opponent:', opponent, 'Theme:', theme);
+      onGameStart={(color, opponent, theme, p1Set, p2Set, p1Over, p2Over) => {
+        console.log('[INDEX] onGameStart - Color:', color, 'Opponent:', opponent);
         setGameMode('online');
         setOnlinePlayerColor(color as Player);
         setOnlineOpponent(opponent);
         setBoardTheme(theme as any);
+        setP1OnlineStyle({ set: p1Set, overrides: p1Over });
+        setP2OnlineStyle({ set: p2Set, overrides: p2Over });
         setScreen('game');
       }}
     />;
@@ -150,10 +154,14 @@ const Index = () => {
         setScreen('menu');
         setOnlinePlayerColor(null);
         setOnlineOpponent(null);
+        setP1OnlineStyle(null);
+        setP2OnlineStyle(null);
         if (gameMode === 'online') socketClient.disconnect('Abandono Jogo');
       }}
       onlinePlayerColor={onlinePlayerColor}
       onlineOpponentName={onlineOpponent}
+      p1OnlineStyle={p1OnlineStyle}
+      p2OnlineStyle={p2OnlineStyle}
       colorOverrides={{
         p1Color: p1ColorOverride,
         p1Glow: p1GlowOverride,

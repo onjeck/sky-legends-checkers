@@ -24,7 +24,7 @@ const rooms = new Map();
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
-    socket.on('create-room', ({ username, kingdomName, theme }) => {
+    socket.on('create-room', ({ username, kingdomName, theme, pieceSet, colorOverrides }) => {
         console.log(`[SERVER] Create room requested by ${username} (${socket.id})`);
         const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
         rooms.set(roomId, {
@@ -32,7 +32,13 @@ io.on('connection', (socket) => {
             kingdomName: kingdomName || `${username}'s Realm`,
             theme: theme || 'golden-clouds',
             username, // creator
-            players: [{ id: socket.id, username, color: 'gold' }],
+            players: [{
+                id: socket.id,
+                username,
+                color: 'gold',
+                pieceSet: pieceSet || 'classic-gold',
+                colorOverrides: colorOverrides || null
+            }],
             moves: []
         });
         socket.join(roomId);
@@ -40,7 +46,7 @@ io.on('connection', (socket) => {
         console.log(`[SERVER] Kingdom ${kingdomName} (${roomId}) created. Creator: ${username}`);
     });
 
-    socket.on('join-room', ({ roomId, username }) => {
+    socket.on('join-room', ({ roomId, username, pieceSet, colorOverrides }) => {
         console.log(`[SERVER] Join room ${roomId} requested by ${username} (${socket.id})`);
         const room = rooms.get(roomId);
         if (!room) {
@@ -55,24 +61,37 @@ io.on('connection', (socket) => {
             return;
         }
 
-        room.players.push({ id: socket.id, username, color: 'crimson' });
+        const newPlayer = {
+            id: socket.id,
+            username,
+            color: 'crimson',
+            pieceSet: pieceSet || 'classic-gold',
+            colorOverrides: colorOverrides || null
+        };
+        room.players.push(newPlayer);
         socket.join(roomId);
 
-        const opponent = room.players[0];
+        const host = room.players[0];
+
+        // Respond to the one who joined with host's style
         socket.emit('room-joined', {
             roomId,
             playerColor: 'crimson',
-            opponentName: opponent.username,
+            opponentName: host.username,
+            opponentPieceSet: host.pieceSet,
+            opponentColorOverrides: host.colorOverrides,
             kingdomName: room.kingdomName,
             theme: room.theme
         });
 
-        // Notify the creator that someone joined
+        // Notify the host that someone joined with their style
         socket.to(roomId).emit('player-joined', {
-            opponentName: username
+            opponentName: username,
+            opponentPieceSet: newPlayer.pieceSet,
+            opponentColorOverrides: newPlayer.colorOverrides
         });
 
-        console.log(`[SERVER] ${username} joined kingdom ${room.kingdomName} (${roomId}). Opponent: ${opponent.username}`);
+        console.log(`[SERVER] ${username} joined kingdom ${room.kingdomName} (${roomId}). Opponent: ${host.username}`);
     });
 
     socket.on('list-rooms', () => {

@@ -20,6 +20,8 @@ interface GameBoardProps {
   onBack: () => void;
   onlinePlayerColor?: Player | null;
   onlineOpponentName?: string | null;
+  p1OnlineStyle?: { set: any, overrides: any } | null;
+  p2OnlineStyle?: { set: any, overrides: any } | null;
   colorOverrides?: {
     p1Color: string | null;
     p1Glow: string | null;
@@ -45,7 +47,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
   onBack,
   onlinePlayerColor,
   onlineOpponentName,
-  colorOverrides
+  p1OnlineStyle,
+  p2OnlineStyle,
+  colorOverrides,
 }) => {
   const [board, setBoard] = useState<Board>(createInitialBoard);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('gold');
@@ -60,6 +64,33 @@ const GameBoard: React.FC<GameBoardProps> = ({
   const captureIdRef = useRef(0);
   const aiTimeoutRef = useRef<number>();
 
+  // Conflict resolution for identical styles
+  const finalP1Style = p1OnlineStyle || { set: basePieceSet, overrides: colorOverrides };
+  const finalP2Style = p2OnlineStyle || { set: basePieceSet, overrides: colorOverrides };
+
+  const isConflict = gameMode === 'online' &&
+    finalP1Style.set === finalP2Style.set &&
+    (finalP1Style.overrides?.p1Color === finalP2Style.overrides?.p2Color ||
+      (!finalP1Style.overrides?.p1Color && !finalP2Style.overrides?.p2Color));
+
+  const getPieceStyle = (player: Player) => {
+    if (gameMode !== 'online') return { set: basePieceSet, overrides: colorOverrides };
+
+    if (player === 'gold') return finalP1Style;
+
+    // If conflict, force a different color for crimson (p2)
+    if (isConflict) {
+      return {
+        ...finalP2Style,
+        overrides: {
+          ...finalP2Style.overrides,
+          p2Color: 'hsl(280 60% 45%)', // Celestial Purple as fallback
+          p2Glow: 'hsl(280 70% 60%)'
+        }
+      };
+    }
+    return finalP2Style;
+  };
   useEffect(() => {
     console.log('[GAME] Mount - Mode:', gameMode, 'Prop Color:', onlinePlayerColor, 'Socket Color:', socketClient.playerColor);
     console.log('[GAME] Opponent Prop:', onlineOpponentName, 'Socket Opponent:', socketClient.opponentName);
@@ -493,9 +524,9 @@ const GameBoard: React.FC<GameBoardProps> = ({
                           piece={cell}
                           isSelected={isSelectedCell || false}
                           onClick={() => handleCellClick(rowIdx, colIdx)}
-                          pieceSet={basePieceSet}
-                          colorOverrides={colorOverrides}
-                          sprites={pieceSets.find(s => s.key === basePieceSet)?.sprites}
+                          pieceSet={getPieceStyle(cell.player).set || basePieceSet}
+                          colorOverrides={getPieceStyle(cell.player).overrides}
+                          sprites={pieceSets.find(s => s.key === (getPieceStyle(cell.player).set || basePieceSet))?.sprites}
                         />
                       )}
                     </div>

@@ -34,7 +34,7 @@ class SocketClient {
         return this.socket;
     }
 
-    createRoom(username: string, kingdomName: string, theme: string): Promise<string> {
+    createRoom(username: string, kingdomName: string, theme: string, pieceSet: string, colorOverrides: any): Promise<string> {
         return new Promise((resolve) => {
             const socket = this.connect();
 
@@ -46,28 +46,42 @@ class SocketClient {
                 resolve(roomId);
             });
 
-            socket.emit('create-room', { username, kingdomName, theme });
+            socket.emit('create-room', { username, kingdomName, theme, pieceSet, colorOverrides });
         });
     }
 
-    joinRoom(roomId: string, username: string): Promise<{ playerColor: 'gold' | 'crimson', opponentName: string, kingdomName: string, theme: string }> {
+    joinRoom(roomId: string, username: string, pieceSet: string, colorOverrides: any): Promise<{
+        playerColor: 'gold' | 'crimson',
+        opponentName: string,
+        opponentPieceSet: string,
+        opponentColorOverrides: any,
+        kingdomName: string,
+        theme: string
+    }> {
         return new Promise((resolve, reject) => {
             const socket = this.connect();
 
-            socket.once('room-joined', ({ playerColor, opponentName, kingdomName, theme }) => {
+            socket.once('room-joined', ({ playerColor, opponentName, opponentPieceSet, opponentColorOverrides, kingdomName, theme }) => {
                 this.roomId = roomId;
                 this.playerColor = playerColor;
                 this.opponentName = opponentName;
                 this.kingdomName = kingdomName;
                 this.boardTheme = theme;
-                resolve({ playerColor, opponentName, kingdomName, theme });
+                resolve({
+                    playerColor,
+                    opponentName,
+                    opponentPieceSet,
+                    opponentColorOverrides,
+                    kingdomName,
+                    theme
+                });
             });
 
             socket.once('error', (msg) => {
                 reject(msg);
             });
 
-            socket.emit('join-room', { roomId, username });
+            socket.emit('join-room', { roomId, username, pieceSet, colorOverrides });
         });
     }
 
@@ -97,8 +111,16 @@ class SocketClient {
         this.socket?.off('opponent-move', callback);
     }
 
-    onPlayerJoined(callback: (data: { opponentName: string }) => void) {
-        const wrapper = (data: { opponentName: string }) => {
+    onPlayerJoined(callback: (data: {
+        opponentName: string,
+        opponentPieceSet: string,
+        opponentColorOverrides: any
+    }) => void) {
+        const wrapper = (data: {
+            opponentName: string,
+            opponentPieceSet: string,
+            opponentColorOverrides: any
+        }) => {
             this.opponentName = data.opponentName;
             callback(data);
         };
@@ -107,7 +129,11 @@ class SocketClient {
         this.socket?.on('player-joined', wrapper);
     }
 
-    offPlayerJoined(callback: (data: { opponentName: string }) => void) {
+    offPlayerJoined(callback: (data: {
+        opponentName: string,
+        opponentPieceSet: string,
+        opponentColorOverrides: any
+    }) => void) {
         const wrapper = (callback as any)._wrapper;
         this.socket?.off('player-joined', wrapper || callback);
     }

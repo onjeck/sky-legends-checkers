@@ -8,7 +8,15 @@ import { toast } from 'sonner';
 interface OnlineLobbyProps {
     username: string;
     onBack: () => void;
-    onGameStart: (playerColor: 'gold' | 'crimson', opponentName: string, theme: string) => void;
+    onGameStart: (
+        playerColor: 'gold' | 'crimson',
+        opponentName: string,
+        theme: string,
+        p1PieceSet: any,
+        p2PieceSet: any,
+        p1Overrides: any,
+        p2Overrides: any
+    ) => void;
 }
 
 const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart }) => {
@@ -19,8 +27,12 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
     const [activeRooms, setActiveRooms] = useState<any[]>([]);
     const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
-    const [isConnecting, setIsConnecting] = useState(false);
     const [opponentFound, setOpponentFound] = useState(false);
+
+    // Style state
+    const [userPieceSet, setUserPieceSet] = useState('classic-gold');
+    const [userColorOverrides, setUserColorOverrides] = useState<any>(null);
+    const [opponentStyle, setOpponentStyle] = useState<any>(null);
 
     // Monitor for room abandonment before game starts
     const opponentFoundRef = React.useRef(opponentFound);
@@ -32,20 +44,52 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
     // Disconnects are now handled by explicit actions (onBack, Cancel button).
     useEffect(() => {
         console.log('[LOBBY] Componente montado. View:', view);
+        fetchUserStyle();
     }, []);
+
+    const fetchUserStyle = async () => {
+        const { data: { user } } = await import('@/integrations/supabase/client').then(m => m.supabase.auth.getUser());
+        if (!user) return;
+
+        const { data: profile } = await import('@/integrations/supabase/client').then(m => m.supabase.from('profiles').select('active_piece_set, p1_color_override, p1_glow_override, p2_color_override, p2_glow_override').eq('id', user.id).maybeSingle());
+
+        if (profile) {
+            setUserPieceSet(profile.active_piece_set || 'classic-gold');
+            setUserColorOverrides({
+                p1Color: profile.p1_color_override,
+                p1Glow: profile.p1_glow_override,
+                p2Color: profile.p2_color_override,
+                p2Glow: profile.p2_glow_override
+            });
+        }
+    };
 
     const handleCreateRoom = async () => {
         setIsConnecting(true);
         try {
-            const id = await socketClient.createRoom(username, kingdomNameInput, selectedTheme);
+            const id = await socketClient.createRoom(username, kingdomNameInput, selectedTheme, userPieceSet, userColorOverrides);
             setCurrentRoomId(id);
             setView('create');
 
-            const handleJoined = ({ opponentName }: { opponentName: string }) => {
+            const handleJoined = (data: {
+                opponentName: string,
+                opponentPieceSet: string,
+                opponentColorOverrides: any
+            }) => {
                 setOpponentFound(true);
-                toast.success(`${opponentName} entrou no seu reino!`);
+                toast.success(`${data.opponentName} entrou no seu reino!`);
+
+                // For host: p1 is us (gold), p2 is opponent (crimson)
                 setTimeout(() => {
-                    onGameStart('gold', opponentName, selectedTheme);
+                    onGameStart(
+                        'gold',
+                        data.opponentName,
+                        selectedTheme,
+                        userPieceSet,
+                        data.opponentPieceSet,
+                        userColorOverrides,
+                        data.opponentColorOverrides
+                    );
                 }, 1500);
             };
 
@@ -77,11 +121,21 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
 
         setIsConnecting(true);
         try {
-            const { playerColor, opponentName, theme } = await socketClient.joinRoom(targetRoomId.toUpperCase().trim(), username);
+            const data = await socketClient.joinRoom(targetRoomId.toUpperCase().trim(), username, userPieceSet, userColorOverrides);
             setOpponentFound(true);
-            toast.success(`Conectado ao reino de ${opponentName}!`);
+            toast.success(`Conectado ao reino de ${data.opponentName}!`);
+
+            // For guest: p1 is opponent (gold), p2 is us (crimson)
             setTimeout(() => {
-                onGameStart(playerColor, opponentName, theme);
+                onGameStart(
+                    data.playerColor,
+                    data.opponentName,
+                    data.theme,
+                    data.opponentPieceSet, // p1
+                    userPieceSet,           // p2
+                    data.opponentColorOverrides, // p1
+                    userColorOverrides           // p2
+                );
             }, 1000);
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : String(err);
