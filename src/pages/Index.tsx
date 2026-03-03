@@ -13,6 +13,7 @@ import { setSoundEnabled, isSoundEnabled } from '@/game/soundEngine';
 import { supabase } from '@/integrations/supabase/client';
 import { Swords, Brain, Zap, Star, Crown, Settings, Palette, User, Globe } from 'lucide-react';
 import { Player } from '@/game/checkersEngine';
+import socketClient from '@/game/socketClient';
 
 type Screen = 'menu' | 'customize' | 'difficulty' | 'settings' | 'game' | 'profile' | 'lobby';
 type GameMode = 'ai' | 'local' | 'online';
