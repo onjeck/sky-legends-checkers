@@ -124,7 +124,10 @@ const Index = () => {
   if (screen === 'lobby') {
     return <OnlineLobby
       username={username}
-      onBack={() => setScreen('menu')}
+      onBack={() => {
+        socketClient.disconnect('Abbandono Lobby');
+        setScreen('menu');
+      }}
       onGameStart={(color, opponent, theme) => {
         console.log('[INDEX] onGameStart - Color:', color, 'Opponent:', opponent, 'Theme:', theme);
         setGameMode('online');
@@ -147,7 +150,7 @@ const Index = () => {
         setScreen('menu');
         setOnlinePlayerColor(null);
         setOnlineOpponent(null);
-        if (gameMode === 'online') socketClient.disconnect();
+        if (gameMode === 'online') socketClient.disconnect('Abandono Jogo');
       }}
       onlinePlayerColor={onlinePlayerColor}
       onlineOpponentName={onlineOpponent}

@@ -120,7 +120,8 @@ class SocketClient {
         this.socket?.off('player-disconnected', callback);
     }
 
-    disconnect() {
+    disconnect(reason: string = 'unknown') {
+        console.log(`[SOCKET] Disconnecting. Reason: ${reason}`);
         this.socket?.disconnect();
         this.socket = null;
         this.roomId = null;

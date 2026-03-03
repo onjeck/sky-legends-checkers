@@ -28,15 +28,10 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
     const viewRef = React.useRef(view);
     viewRef.current = view;
 
+    // We will no longer disconnect on unmount, as it's too unreliable during transitions.
+    // Disconnects are now handled by explicit actions (onBack, Cancel button).
     useEffect(() => {
-        return () => {
-            // ONLY disconnect if we are leaving the lobby without finding an opponent
-            // or if we are the host and haven't started the game yet.
-            if (!opponentFoundRef.current && (viewRef.current === 'create' || viewRef.current === 'setup' || viewRef.current === 'join')) {
-                console.log('[LOBBY] Sair do lobby sem oponente, desconectando...');
-                socketClient.disconnect();
-            }
-        };
+        console.log('[LOBBY] Componente montado. View:', view);
     }, []);
 
     const handleCreateRoom = async () => {
@@ -252,7 +247,7 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ username, onBack, onGameStart
                             </div>
 
                             <button
-                                onClick={() => { setView('selection'); socketClient.disconnect(); }}
+                                onClick={() => { setView('selection'); socketClient.disconnect('Cancelado pelo Host'); }}
                                 className="text-sm text-muted-foreground hover:text-crimson transition-colors font-body"
                             >
                                 Cancelar Batalha
