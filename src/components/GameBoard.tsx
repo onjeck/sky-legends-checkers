@@ -165,7 +165,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
         // Turn stays the same
       } else {
         setCaptureSequencePos(null);
-        setCurrentPlayer(socketClient.playerColor || 'gold'); // It's our turn now
+        setCurrentPlayer(onlinePlayerColor || socketClient.playerColor || 'gold'); // It's our turn now
       }
     };
 
@@ -303,7 +303,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       setSelectedPos({ row, col });
       setValidMoves(getValidMoves(board, row, col, ruleSet, captureSequencePos));
     }
-  }, [board, currentPlayer, selectedPos, validMoves, winner, captureSequencePos, ruleSet, gameMode, triggerCaptureEffects]);
+  }, [board, currentPlayer, selectedPos, validMoves, winner, captureSequencePos, ruleSet, gameMode, triggerCaptureEffects, onlinePlayerColor]);
 
   const resetGame = () => {
     setBoard(createInitialBoard());
