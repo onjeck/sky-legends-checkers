@@ -13,14 +13,22 @@ class SocketClient {
 
     connect() {
         if (!this.socket) {
-            this.socket = io(SERVER_URL);
-
-            this.socket.on('connect', () => {
-                console.log('Connected to celestial relay');
+            console.log(`[SOCKET] Tentando conectar ao servidor: ${SERVER_URL}`);
+            this.socket = io(SERVER_URL, {
+                transports: ['websocket', 'polling'], // Garantir compatibilidade maior
+                reconnectionAttempts: 5
             });
 
-            this.socket.on('disconnect', () => {
-                console.log('Disconnected from celestial relay');
+            this.socket.on('connect', () => {
+                console.log(`[SOCKET] Conectado com sucesso ao relay: ${this.socket?.id}`);
+            });
+
+            this.socket.on('connect_error', (error) => {
+                console.error(`[SOCKET] Erro na conexão com ${SERVER_URL}:`, error.message);
+            });
+
+            this.socket.on('disconnect', (reason) => {
+                console.log(`[SOCKET] Desconectado: ${reason}`);
             });
         }
         return this.socket;
