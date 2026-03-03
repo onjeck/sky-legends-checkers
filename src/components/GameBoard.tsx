@@ -18,6 +18,8 @@ interface GameBoardProps {
   ruleSet: RuleSet;
   gameMode: 'ai' | 'local' | 'online';
   onBack: () => void;
+  onlinePlayerColor?: Player | null;
+  onlineOpponentName?: string | null;
   colorOverrides?: {
     p1Color: string | null;
     p1Glow: string | null;
@@ -34,7 +36,17 @@ const boardColors: Record<BoardTheme, { light: string; dark: string; accent: str
   'arcade-paradise': { light: 'hsl(180 60% 50%)', dark: 'hsl(260 40% 15%)', accent: 'hsl(320 70% 55%)' },
 };
 
-const GameBoard: React.FC<GameBoardProps> = ({ difficulty, boardTheme, pieceSet: basePieceSet, ruleSet, gameMode, onBack, colorOverrides }) => {
+const GameBoard: React.FC<GameBoardProps> = ({
+  difficulty,
+  boardTheme,
+  pieceSet: basePieceSet,
+  ruleSet,
+  gameMode,
+  onBack,
+  onlinePlayerColor,
+  onlineOpponentName,
+  colorOverrides
+}) => {
   const [board, setBoard] = useState<Board>(createInitialBoard);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('gold');
   const [selectedPos, setSelectedPos] = useState<Position | null>(null);
@@ -159,7 +171,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ difficulty, boardTheme, pieceSet:
 
     socketClient.onOpponentMove(handleOpponentMove);
     return () => socketClient.offOpponentMove(handleOpponentMove);
-  }, [ruleSet, gameMode, triggerCaptureEffects]);
+  }, [ruleSet, gameMode, triggerCaptureEffects, onlinePlayerColor]);
 
   // AI move
   useEffect(() => {
@@ -205,7 +217,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ difficulty, boardTheme, pieceSet:
 
     // Online locking logic
     if (gameMode === 'online') {
-      if (currentPlayer !== socketClient.playerColor) return;
+      const myColor = onlinePlayerColor || socketClient.playerColor;
+      if (currentPlayer !== myColor) {
+        console.log(`[GAME] Bloqueado: Vez de ${currentPlayer}, eu sou ${myColor}`);
+        return;
+      }
     } else if (gameMode === 'ai') {
       if (currentPlayer !== 'gold') return;
     }
@@ -358,7 +374,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ difficulty, boardTheme, pieceSet:
           {goldCount.kings > 0 && <span className="text-xs text-gold-glow">({goldCount.kings}👑)</span>}
         </div>
         <div className="text-xs text-muted-foreground font-body">
-          {isAIThinking ? '🤔 IA pensando...' : winner ? '' : gameMode === 'local' ? (currentPlayer === 'gold' ? 'Vez do Ouro' : 'Vez do Vermelho') : gameMode === 'online' ? (currentPlayer === socketClient.playerColor ? 'Seu Turno' : `Vez de ${socketClient.opponentName}`) : (currentPlayer === 'gold' ? 'Sua vez' : 'Vez da IA')}
+          {isAIThinking ? '🤔 IA pensando...' : winner ? '' : gameMode === 'local' ? (currentPlayer === 'gold' ? 'Vez do Ouro' : 'Vez do Vermelho') : gameMode === 'online' ? (currentPlayer === (onlinePlayerColor || socketClient.playerColor) ? 'Seu Turno' : `Vez de ${onlineOpponentName || socketClient.opponentName || 'Oponente'}`) : (currentPlayer === 'gold' ? 'Sua vez' : 'Vez da IA')}
         </div>
         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${currentPlayer === 'crimson' && !winner ? 'box-glow-crimson bg-crimson/10' : 'bg-secondary/30'} transition-all`}>
           <span className="text-sm font-body text-foreground">{crimsonCount.normal + crimsonCount.kings}</span>

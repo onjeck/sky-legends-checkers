@@ -37,6 +37,7 @@ const Index = () => {
   const [ruleSet, setRuleSet] = useState<RuleSet>(() => (localStorage.getItem('ruleSet') as RuleSet) || 'brazilian');
   const [gameMode, setGameMode] = useState<GameMode>(() => (localStorage.getItem('gameMode') as GameMode) || 'ai');
   const [onlineOpponent, setOnlineOpponent] = useState<string | null>(null);
+  const [onlinePlayerColor, setOnlinePlayerColor] = useState<'gold' | 'crimson' | null>(null);
 
   // Piece Color Overrides
   const [p1ColorOverride, setP1ColorOverride] = useState<string | null>(null);
@@ -122,8 +123,9 @@ const Index = () => {
     return <OnlineLobby
       username={username}
       onBack={() => setScreen('menu')}
-      onGameStart={(_, opponent, theme) => {
+      onGameStart={(color, opponent, theme) => {
         setGameMode('online');
+        setOnlinePlayerColor(color as Player);
         setOnlineOpponent(opponent);
         setBoardTheme(theme as any);
         setScreen('game');
@@ -139,6 +141,8 @@ const Index = () => {
       ruleSet={ruleSet}
       gameMode={gameMode}
       onBack={() => setScreen('menu')}
+      onlinePlayerColor={onlinePlayerColor}
+      onlineOpponentName={onlineOpponent}
       colorOverrides={{
         p1Color: p1ColorOverride,
         p1Glow: p1GlowOverride,
